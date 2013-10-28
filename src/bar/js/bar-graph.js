@@ -94,10 +94,11 @@ var BarGraph = function(opts) {
 	        layerCount.push(categoryData);
 	    }
 
-	    var isBarVisible = function(value) {
+	    var isBarVisible = function(element) {
+	    	if(element.hidden) return false;
 	    	return self.display.labels.bars.hideThreshold === 0 ? 
 	    		true : 
-	    		value > self.display.labels.bars.hideThreshold; 
+	    		element.value > self.display.labels.bars.hideThreshold; 
 	    };
 
 	    //generate a bunch of data objects for our data
@@ -117,7 +118,7 @@ var BarGraph = function(opts) {
 	        	parent: layerCount[idx].name,
 	        	dispValue: isBarVisible(barValue) ? barValue: 0, 
 	        	x: idx, 
-	        	y: isBarVisible(barValue) ? (self.layout.graph.type == "percent" ?
+	        	y: isBarVisible(element) ? (self.layout.graph.type == "percent" ?
 	        		Math.max(0, (element.value/layerCount[idx].total)*100) :
 	        		element.value) : 0
 	        }; 
