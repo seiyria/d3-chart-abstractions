@@ -1,133 +1,8 @@
 
-
-//merge all options contained in both left and right, into left
-var merge = function(left, right) {
-	for(var property in left) {
-		if(right.hasOwnProperty(property)) {
-			if(typeof left[property] === "object")
-				left[property] = merge(left[property], right[property])
-			else
-				left[property] = right[property]
-		}
-	}
-
-	return left;
-}
-
-
-
-//look into doing this better - this is for id assignment
-var currentItem = 0;
-
-var BarGraph = function(opts) {
-
-	var defaults = {
-		formatting: {
-			numFormat: '',
-			strFormat: "%n",
-			formatter: function(d) { return d; }
-		},
-
-		font: {
-			align: "center",
-			face: "sans-serif",
-			weight: "normal",
-			style: "normal",
-			size: "10px"
-		},
-
-		display: {
-			labels: {
-				aggregate: {
-					show: false,
-					formatting: undefined,
-					font: undefined
-				},
-
-				bars: {
-					formatting: undefined,
-					font: undefined,
-					show: true,
-					hideSmallValueLabels: true,
-					hideThreshold: 0,
-					gradient: false
-				},
-
-				x: {
-					formatting: undefined,
-					font: undefined,
-					text: ""
-				},
-
-				y: {
-					formatting: undefined,
-					font: undefined,
-					text: ""
-				},
-
-				tooltip: {
-					formatting: undefined
-				},
-
-				axes: {
-					formatting: undefined,
-					font: undefined
-				},
-
-				legend: {
-					formatting: undefined,
-					font: undefined
-				}
-			},
-
-			grid: {
-				lines: "horizontal",
-				tickPadding: 7,
-				tickCount: 10
-			},
-
-			target: "body"
-		},
-
-		layout: {
-			margin: {
-				top: 	20,
-				bottom: 40,
-				left: 	50,
-				right: 	55
-			},
-			padding: 	30,
-			width: 		960,
-			height: 	500,
-
-			graph: {
-				style: 	"group",
-				type: 	"value",
-				bars: {
-					direction: 	"vertical",
-					spacing: 	0,
-					maxWidth: 	null 
-				}
-			},
-
-			legend: {
-				width: 	100,
-				height: 100,
-				compass: "right"
-			}
-		},
-
-		data: {
-			graph: 	undefined,
-			legend: undefined
-		}
-	};
+var HorizontalBarGraph = function(opts) {
 
 	//merge the objects, taking only the data from opts
-	var merged = merge(defaults, opts);
-
-	//take care of the bits that need to be calculated, assigned, or tweaked
-	//merged.formatting.numFormat = d3.format(merged.formatting.numFormat);
+	var merged = this.merge(this.defaults, opts);
 
 	merged.layout.width = merged.layout.width - merged.layout.margin.left - merged.layout.margin.right;
 	merged.layout.height = merged.layout.height - merged.layout.margin.top - merged.layout.margin.bottom;
@@ -150,9 +25,7 @@ var BarGraph = function(opts) {
 
 		if(typeof e.formatting.numFormat !== "function")
 			e.formatting.numFormat = d3.format(e.formatting.numFormat);
-	})
-
-	//generally we want the tooltip formatting to be the same as the bar... but you never know I guess
+	});
 	
 	//do the same thing as the formatting objects
 	var fontObjects = [
@@ -167,7 +40,7 @@ var BarGraph = function(opts) {
 
 	fontObjects.forEach(function(e, i) {
 		e.font = e.font || merged.font;
-	})
+	});
 
 	//this is the only data that needs to be accessible while rendering, since the rest was computed
 	this.layout = merged.layout;
@@ -176,7 +49,7 @@ var BarGraph = function(opts) {
 
 	//generating data points - we need to know how much to generate
 	//every data set needs to be symmetric - I do not zero-fill missing data.
-	var barCount = this.data.graph[0].data.length;
+	var barsPerLayer = this.data.graph[0].data.length;
     var layerCount = Object.keys(this.data.graph).length;
 
     //easy referencing in nested functions
@@ -237,7 +110,7 @@ var BarGraph = function(opts) {
 	    	var barValue = formatValue(element);
 
 	        return {
-	        	id: element.name + (currentItem++),
+	        	id: element.name + (self.currentItem++),
 	        	name: element.name,
 	        	parent: layerCount[idx].name,
 	        	dispValue: isBarVisible(barValue) ? barValue: 0, 
@@ -260,7 +133,7 @@ var BarGraph = function(opts) {
 	    if(self.display.labels.aggregate.show) {
 	    	aggregates = totals.map(function(element, idx) {
 		        return {
-		        	id: "agg" + (currentItem++),
+		        	id: "agg" + (self.currentItem++),
 		        	isAggregate: true,
 		        	name: element.name,
 		        	dispValue: element.value, 
@@ -280,10 +153,14 @@ var BarGraph = function(opts) {
 	var xScale;
 	var yScale;
 	var stack = d3.layout.stack();
-	var layerData = d3.range(barCount).map(function(v, idx) { return setupDataPoints(idx); });
+	var layerData = d3.range(barsPerLayer).map(function(v, idx) { return setupDataPoints(idx); });
     var layers = stack(layerData);
     var yGroupMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { return d.y; }); });
     var yStackMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { return d.y0 + d.y; }); });
+
+    //add a little room for the graph to show labels and have a max height
+   	if(self.layout.graph.type == "value")
+    	yStackMax = yStackMax + Math.floor(yStackMax/10);
 
     var rect;
     var text;
@@ -302,112 +179,95 @@ var BarGraph = function(opts) {
 	var textPositionCalc = function() {
 		var base = {
 			x: function(d, i, j) { 
-				var ret = xScale(d.x);
-
-				if(self.layout.graph.style == "stack") {
-					ret += (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand()) / 2;
-
-				} else {
-					ret += self.layout.graph.bars.spacing / 4;
-					ret += xScale.rangeBand() / barCount * j;
-					ret += (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand() / barCount) / 2;
-				}
-
-				return ret - d.compLen/2;
-			},
-			y: function(d) { 
-				var ret = d.compHeight/3;
+				var ret = -d.compLen/2;
 				if(self.layout.graph.style == "stack")
 					if(d.isAggregate) 
-						ret += yScale(d.y0);
+						ret += xScale(d.y0);
 					else
-						ret += yScale(d.y0 + d.y/2);
+						ret += xScale(d.y0 + d.y/2);
 				else 
-					ret += yScale(d.y/2);
+					ret += xScale(d.y/2);
+
 				return ret;
 			},
-			height: function(d) { 
-				if(self.layout.graph.style == "stack")
-					return yScale(d.y0) - yScale(d.y0 + d.y);
-				else
-					return self.layout.height - yScale(d.y);
-			},
-			width: function(d) { 
-				if(self.layout.graph.style == "stack") 
-					return xScale.rangeBand();
-				else 
-					return ((self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand() / barCount) ) / 2;
-				
+			y: function(d, i, j) { 
+				var ret = yScale(d.x);
+
+				if(self.layout.graph.style == "stack") {
+					ret += (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : yScale.rangeBand()) / 2;
+
+				} else {
+					var offset = yScale.rangeBand() / barsPerLayer;
+					ret += offset*j;
+					ret += offset/2;
+					ret += self.layout.graph.bars.spacing / 4;
+				}
+
+				return ret + d.compHeight/3;
 			}
 		};
 		var left = {
 			x: function(d, i, j) { 
-				var ret = base.x(d, i, j);
+				var ret = 1;
 
 				if(self.layout.graph.style == "stack"){
-					ret -= (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand()) / 2;
-				} else {
-					ret -= (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand() / barCount) / 2;
+					ret += xScale(d.y0);
 				}
-				ret += d.compLen/2;
 
 				return ret;
 			},
-			y: function(d) { return base.y(d); },
-			height: function(d) { return base.height(d) },
-			width: function(d) { return base.width(d); }
+			y: function(d, i, j) { return base.y(d, i, j); }
 		};
 		var right = {
 			x: function(d, i, j) { 
-				var ret = base.x(d, i, j);
+				var ret = 0;
 
 				if(self.layout.graph.style == "stack"){
-					ret += (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand()) / 2;
+					ret += xScale(d.y0 + d.y);
 				} else {
-					ret += (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand() / barCount) / 2;
+					ret += xScale(d.y);
 				}
-				
-				ret -= d.compLen/2;
 
-				return ret;
+				return ret - d.compLen - 1;
 			},
-			y: function(d) { return base.y(d); },
-			height: function(d) { return base.height(d) },
-			width: function(d) { return base.width(d); }
+			y: function(d, i, j) { return base.y(d, i, j); }
 		};
 		var top = {
 			x: function(d, i, j) { return base.x(d, i, j); },
-			y: function(d) { 
-				var ret = 0;
+			y: function(d, i, j) { 
+				var ret = yScale(d.x);
 
-				if(self.layout.graph.style == "stack")
-					ret += yScale(d.y0 + d.y);
-				else 
-					ret += yScale(d.y);
+				if(self.layout.graph.style == "stack") {
+					ret += (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : yScale.rangeBand()/barsPerLayer);
+					ret -= d.compHeight;
 
-				ret += d.compHeight;
+				} else {
+					var offset = yScale.rangeBand() / barsPerLayer;
+					ret += offset*j;
+					ret += offset/2;
+					ret -= d.compHeight/3;
+					ret += self.layout.graph.bars.spacing / 4;
+				}
 
-				return ret; 
-			},
-			height: function(d) { return base.height(d) },
-			width: function(d) { return base.width(d); }
+				return ret;
+			}
 		};
 		var bottom = {
 			x: function(d, i, j) { return base.x(d, i, j); },
-			y: function(d) { 
-				var ret = 0;
+			y: function(d, i, j) { 
+				var ret = yScale(d.x);
 
-				if(self.layout.graph.style == "stack")
-					ret += yScale(d.y0);
-				else 
-					ret += yScale(0);
+				if(self.layout.graph.style == "stack") {
+					ret += (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : yScale.rangeBand());
 
-				ret -= d.compHeight/4;
+				} else {
+					var offset = yScale.rangeBand() / barsPerLayer;
+					ret += offset*(j+1);
+					ret += self.layout.graph.bars.spacing / 4;
+				}
 
-				return ret; 
-			},
-			height: function(d) { return base.height(d) },
-			width: function(d) { return base.width(d); }
+				return ret -= d.compHeight/3;
+			}
 		};
 
 		switch(self.display.labels.bars.font.align) {
@@ -484,26 +344,27 @@ var BarGraph = function(opts) {
 		};
 
 		//create all the d3 variables
-		xScale = d3.scale.ordinal()
-		    .domain(d3.range(layerCount))
-		    .rangeRoundBands([0, self.layout.width], .08);
+		xScale = d3.scale.linear()
+		    .domain([yStackMax, 0])
+		    .range([self.layout.width, 0]);
 
-		yScale = d3.scale.linear()
-		    .domain([0, yStackMax])
-		    .range([self.layout.height, 0]);
+		yScale = d3.scale.ordinal()
+		    .domain(d3.range(layerCount))
+		    .rangeRoundBands([0, self.layout.height], .08);
 
 		xAxis = d3.svg.axis()
 		    .scale(xScale)
-		    .tickSize(0)
+		    .tickSize((self.display.grid.lines.indexOf("vert") !== -1 ? -self.layout.width : 0), 0, 0)
 		    .tickPadding(self.display.grid.tickPadding)
+			.ticks(self.display.grid.tickCount)
 		    .orient("bottom");
 
 		yAxis = d3.svg.axis()
 			.scale(yScale)
 			.orient("left")
-		    .tickSize((self.display.grid.lines.indexOf("horiz") !== -1 ? -self.layout.width : 0), 0, 0)
-		    .tickPadding(self.display.grid.tickPadding)
-			.ticks(self.display.grid.tickCount);
+		    .tickSize(0)
+		    .tickPadding(self.display.grid.tickPadding);
+
 
 		//lets start making that svg now...
 		var svg = (function setupGraph() {
@@ -518,6 +379,7 @@ var BarGraph = function(opts) {
 		    svgElement = d3.select(self.display.target).append("svg")
 		        .attr("width", bounds.width)
 		        .attr("height", bounds.height)
+		        .attr("class", "graph-horizontal")
 			.append("g")
 		        .attr("transform", "translate(" + bounds.offsetX + "," + bounds.offsetY + ")");
 
@@ -528,7 +390,7 @@ var BarGraph = function(opts) {
 			svgElement.append("g")
 			    .attr("class", "y axis")
 			    .attr("stroke-width", "0")
-			    .attr("transform", "translate(20,0)")
+			    .attr("transform", "translate(-10,0)")
 			    .call(yAxis);
 
 			svgElement.append("g")
@@ -550,7 +412,7 @@ var BarGraph = function(opts) {
 			svgElement.append("text")
 			    .attr("class", "y label")
 			    .attr("text-anchor", "end")
-			    .attr("y", -20)
+			    .attr("y", -25)
 			    .attr("x", -self.layout.height/2)
 			    .attr("dy", ".75em")
 			    .attr("transform", "rotate(-90)")
@@ -632,7 +494,7 @@ var BarGraph = function(opts) {
 
 			    .on('mouseover', tip.show)
 			    .on('mouseout', tip.hide)
-			    .on('mousedown', function(d) { console.log(d.parent + " " + d.dispValue); })
+			    .on('mousedown', function(d) { console.debug(d.parent + " " + d.dispValue); })
 			    //outlines
 			    .style("stroke", "#000")
 			    .style("stroke-width", "1px");
@@ -650,9 +512,8 @@ var BarGraph = function(opts) {
 			        		self.display.labels.bars.formatting.strFormat
 			        			.split("%n").join(self.display.labels.bars.formatting.numFormat(d.dispValue)); 
 			        	})
-			        .attr("width", self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand())
-			        .attr("class", "rectInner")
-			        .attr("id", function(d) { return d.id; })
+			        //.attr("width", self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand())
+			        .attr("class", function(d) { return "rectInner "+d.id; })
 			        .style("pointer-events", "none")
 				    .style("font-family", self.display.labels.bars.font.face)
 				    .style("font-size", self.display.labels.bars.font.size)
@@ -677,7 +538,7 @@ var BarGraph = function(opts) {
 		})();
 
 		//draw aggregate labels if necessary
-		if(self.display.labels.aggregate.show)
+		if(self.display.labels.aggregate.show) {
 			aggregateLabels = (function(){ 
 				var labels = totalLabels();
 
@@ -692,18 +553,20 @@ var BarGraph = function(opts) {
 				        .style("fill", "#000");
 				})
 
-				var retVal = d3.selectAll(".aggregate");
+				var retVal = svgElement.selectAll(".aggregate");
 
 				retVal.each(function(d, idx) {
 					var el = d3.select(this);
 					var length = this.getBBox().width;
 					var height = this.getBBox().height;
+
 					labels[idx].compLen = length; 
 					labels[idx].compHeight = height; 
 				});
 
 				return retVal;
 			})();
+		}
 
 		//draw and place the legend
 		var legend = (function() {
@@ -746,7 +609,7 @@ var BarGraph = function(opts) {
 					.attr("y", yFunction())
 					.attr("width", 10)
 					.attr("height", 10)
-					.on('mousedown', function(d) { console.log(d); })
+					.on('mousedown', function(d) { console.debug(d); })
 					.style("fill", function(d) { 
 						return d.color;
 					});
@@ -768,8 +631,6 @@ var BarGraph = function(opts) {
 			var elCount = 0;
 			var maxWidth = 0;
 
-			//TODO auto calc some bounding box junk
-
 			legendG.each(function() {
 				elCount++;
 				var width = this.getBBox().width;
@@ -788,13 +649,18 @@ var BarGraph = function(opts) {
 		})();	
 		
 	};
-	
-	//some finishing remarks for the svg
-	var cleanup = function() {
 
-		//change the axis text
-		svgElement.selectAll(".x.axis .tick text")
-		    .text(function(x) { return self.data.graph[x].name; });
+	var cleanupSVG = function() {
+		//change the axis text, rotate it, and reposition it
+		svgElement.selectAll(".y.axis .tick text")
+		    .text(function(x) { return self.data.graph[x].name; })
+			.attr("transform", "rotate(-90)")
+			.each(function(d) {
+				var me = d3.select(this);
+				var myHeight = this.getBBox().width;
+
+				me.attr("x", parseInt(me.attr("x")) + myHeight/2)
+			});
 
 		//change the axis font
 		svgElement.selectAll(".axis .tick text")
@@ -820,112 +686,118 @@ var BarGraph = function(opts) {
 				el.attr("data-centered","true");
 			}
 		});
-	};
+	}
 
 	//perform a transition to the grouped state
 	self.groupTransition = function transitionGrouped(instant) {
 
+		console.log("group transition")
+
 		self.layout.graph.style="group";
 		var textPosition = textPositionCalc();
-
-		//magic numbers!
-		var max = yGroupMax*2.5;
-
-		if(self.layout.type == 'percent')
-			max *= 2/3;
-
-		yScale.domain([0, max]);
 
 		rect.transition()
 			.duration(instant ? 0 : 500)
 			.delay(function(d, i) { return instant ? 0 : i * 10; })
 				.attr("x", function(d, i, j) { 
-					return xScale(d.x) + self.layout.graph.bars.spacing/2 + 
-						xScale.rangeBand() / barCount * j; 
-					})
-				.attr("width", (self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand() / barCount) 
-					- self.layout.graph.bars.spacing/2)
+					return 0;
+				})
+				.attr("width", function(d, i, j) {
+					return xScale(d.y);
+				})
 			.transition()
 				.duration(instant ? 0 : 250)
-				.attr("y", function(d) { return yScale(d.y); })
-				.attr("height", function(d) { return self.layout.height - yScale(d.y); })
+				.attr("y", function(d, i, j) { 
+					return yScale(d.x) + yScale.rangeBand() / barsPerLayer*j;
+				})
+				.attr("height", function(d, i, j) { 
+					return (self.layout.graph.bars.maxWidth 
+						? self.layout.graph.bars.maxWidth 
+						: yScale.rangeBand() / barsPerLayer) 
+					- self.layout.graph.bars.spacing/2;
+				})
+				.each("end", function(d) {
 
+					var me = d3.select(this);
+					var text = svgElement.select("."+d.id);
+					var myWidth = me.attr("width");
+
+					if(self.display.labels.bars.hideSmallValueLabels && myWidth <= d.compLen) {
+						text.style("visibility", "hidden");
+					} else {
+						text.style("visibility", "visible");
+					}
+				});
 
 		text
 			.transition()
 				.duration(instant ? 0 : 500)
 				.delay(function(d, i) { return instant ? 0 : i * 10; })
 					.attr("x", textPosition.x)
-					.attr("width", textPosition.width)
 			.transition()
 				.duration(instant ? 0 : 250)
-				.attr("y", textPosition.y)
-				.attr("height", textPosition.height)
-				.each("end", function(d) {
+				.attr("y", textPosition.y);
 
-					var me = d3.select(this);
-					var text = d3.select("#"+d.id);
-					var myHeight = me.attr("height");
-
-					if(self.display.labels.bars.hideSmallValueLabels && myHeight <= d.compHeight) {
-						text.style("visibility", "hidden");
-					} else {
-						text.style("visibility", "visible");
-					}
-				});
-
-		if(self.display.labels.aggregate.show)
+		if(self.display.labels.aggregate.show && aggregateLabels) {
 			aggregateLabels
 				.transition()
 					.duration(instant ? 0 : 500)
 					.delay(function(d, i) { return instant ? 0 : i * 10; })
-						.attr("opacity", 0)
-
-		cleanup();
+						.attr("opacity", 0);
+		}
 	};
 
 	//transition to a stacked graph
 	self.stackTransition = function transitionStacked(instant) {
 
+		console.log("stack transition")
+
 		self.layout.graph.style="stack";
 		var textPosition = textPositionCalc();
-
-		yScale.domain([0, yStackMax]);
 
 		rect.transition()
 			.duration(instant ? 0 : 500)
 			.delay(function(d, i) { return instant ? 0 : i * 10; })
-				.attr("y", function(d) { return yScale(d.y0 + d.y); })
-				.attr("height", function(d) { return yScale(d.y0) - yScale(d.y0 + d.y); })
+				.attr("y", function(d, i, j) { 
+					return yScale(d.x);
+				})
+				.attr("height", function(d, i, j) { 
+					return self.layout.graph.bars.maxWidth 
+						? self.layout.graph.bars.maxWidth 
+						: yScale.rangeBand();
+				})
 			.transition()
 				.duration(instant ? 0 : 250)
-				.attr("x", function(d) { return xScale(d.x); })
-				.attr("width", self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand());
-
-		text
-			.transition()
-				.duration(instant ? 0 : 500)
-				.delay(function(d, i) { return instant ? 0 : i * 10; })
-					.attr("y",  textPosition.y)
-					.attr("height", textPosition.height)
-			.transition()
-				.duration(instant ? 0 : 250)
-				.attr("x", textPosition.x)
-				.attr("width", textPosition.width)
+				.attr("x", function(d, i, j) { 
+					return xScale(d.y0);
+				})
+				.attr("width", function(d, i, j) {
+					return xScale(d.y);
+				})
 				.each("end", function(d) {
 
 					var me = d3.select(this);
-					var text = d3.select("#"+d.id);
-					var myHeight = me.attr("height");
+					var text = svgElement.select("."+d.id);
+					var myWidth = me.attr("width");
 
-					if(self.display.labels.bars.hideSmallValueLabels && myHeight <= d.compHeight) {
+					if(self.display.labels.bars.hideSmallValueLabels && myWidth <= d.compLen) {
 						text.style("visibility", "hidden");
 					} else {
 						text.style("visibility", "visible");
 					}
 				});
 
-		if(self.display.labels.aggregate.show) {
+		text
+			.transition()
+				.duration(instant ? 0 : 500)
+				.delay(function(d, i) { return instant ? 0 : i * 10; })
+					.attr("y", textPosition.y)
+			.transition()
+				.duration(instant ? 0 : 250)
+				.attr("x", textPosition.x);
+
+		if(self.display.labels.aggregate.show && aggregateLabels) {
+
 			var labels = totalLabels();
 
 			aggregateLabels
@@ -933,26 +805,19 @@ var BarGraph = function(opts) {
 					.duration(instant ? 0 : 500)
 					.delay(function(d, i) { return instant ? 0 : i * 10; })
 						.attr("opacity", 1)
-						.attr("y", function(d, i, j) { 
-							return textPosition.y(labels[i], i, j) - labels[i].compHeight / 2;
-						})
-						.attr("height", function(d, i, j) { 
-							return textPosition.height(labels[i], i, j);
+						.attr("x", function(d, i, j) { 
+							return textPosition.x(labels[i], i, j) + 1 + labels[i].compLen/2;
 						})
 				.transition()
 					.duration(instant ? 0 : 250)
-					.attr("x", function(d, i, j) { 
-							return textPosition.x(labels[i], i, j);
+					.attr("y", function(d, i, j) { 
+							return textPosition.y(labels[i], i, j);
 						})
-					.attr("width", function(d, i, j) { 
-							return textPosition.width(labels[i], i, j);
-						});
 		}
-
-		cleanup();
 	};
 
 	self.redraw();
+	cleanupSVG();
 
 	//determine initial orientation after drawing
 	(function() {
@@ -969,3 +834,121 @@ var BarGraph = function(opts) {
 	})();
 
 };
+
+HorizontalBarGraph.prototype.defaults =  {
+	formatting: {
+		numFormat: '',
+		strFormat: "%n",
+		formatter: function(d) { return d; }
+	},
+
+	font: {
+		align: "center",
+		face: "sans-serif",
+		weight: "normal",
+		style: "normal",
+		size: "10px"
+	},
+
+	display: {
+		labels: {
+			aggregate: {
+				show: false,
+				formatting: undefined,
+				font: undefined
+			},
+
+			bars: {
+				formatting: undefined,
+				font: undefined,
+				show: true,
+				swap: false,
+				hideSmallValueLabels: true,
+				hideThreshold: 0,
+				gradient: false
+			},
+
+			x: {
+				formatting: undefined,
+				font: undefined,
+				text: ""
+			},
+
+			y: {
+				formatting: undefined,
+				font: undefined,
+				text: ""
+			},
+
+			tooltip: {
+				formatting: undefined
+			},
+
+			axes: {
+				formatting: undefined,
+				font: undefined
+			},
+
+			legend: {
+				formatting: undefined,
+				font: undefined
+			}
+		},
+
+		grid: {
+			lines: "vertical",
+			tickPadding: 7,
+			tickCount: 10
+		},
+
+		target: "body"
+	},
+
+	layout: {
+		margin: {
+			top: 	20,
+			bottom: 40,
+			left: 	50,
+			right: 	55
+		},
+		padding: 	30,
+		width: 		960,
+		height: 	500,
+
+		graph: {
+			style: 	"group",
+			type: 	"value",
+			bars: {
+				direction: 	"vertical",
+				spacing: 	0,
+				maxWidth: 	null 
+			}
+		},
+
+		legend: {
+			width: 	100,
+			height: 100,
+			compass: "right"
+		}
+	},
+
+	data: {
+		graph: 	undefined,
+		legend: undefined
+	}
+};
+
+HorizontalBarGraph.prototype.merge = function(left, right) {
+	for(var property in left) {
+		if(right.hasOwnProperty(property)) {
+			if(typeof left[property] === "object")
+				left[property] = this.merge(left[property], right[property])
+			else
+				left[property] = right[property]
+		}
+	}
+
+	return left;
+}
+
+HorizontalBarGraph.prototype.currentItem = 0;
