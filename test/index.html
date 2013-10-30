@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<link href="../ext_temp/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+<link href="../bower_components/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
 <link href="../src/bar/css/bar-graph.css" rel="stylesheet" />
 <!-- need an empty div to dump the tooltip in -->
 <div></div>
 
-<script src="../ext_temp/d3.v3.min.js"></script>
-<script src="../ext_temp/d3.tip.min.js"></script>
+<script src="../bower_components/d3/d3.min.js"></script>
+<script src="../bower_components/d3-tip/index.js"></script>
 <script src="../data/bar-data.js"></script>
-<script src="../src/bar/js/bar-graph.js"></script>
-<script src="../src/bar/js/horiz-bar-graph.js"></script>
+<script src="../dist/development/bar.js"></script>
 <script>
 var graph = new HorizontalBarGraph({
 	font: {

@@ -1,0 +1,29 @@
+{
+	"name": "d3-chart-abstractions",
+	"version": "0.0.1",
+	"description": "Some extra layers on d3.",
+	"scripts": {
+		"install": "bower install",
+		"test": "grunt test"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/seiyria/d3-chart-abstractions.git"
+	},
+	"author": "Kyle Kemp",
+	"license": "MTT",
+	"readmeFilename": "README.md",
+	"dependencies": {
+		"grunt": "*",
+		"grunt-contrib-uglify": "*",
+		"grunt-contrib-cssmin": "*",
+		"grunt-contrib-jshint": "*",
+		"grunt-contrib-csslint": "*",
+		"grunt-contrib-watch": "*",
+		"grunt-contrib-connect": "*",
+		"grunt-remove-logging": "*",
+		"grunt-mocha-test": "*",
+		"grunt-open": "*",
+		"bower": "*"
+	}
+}
