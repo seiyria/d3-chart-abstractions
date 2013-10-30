@@ -955,16 +955,20 @@ BarGraph.prototype.defaults = {
 };
 
 BarGraph.prototype.merge = function(left, right) {
+
+	//aww yeah, deep copies
+	var ret = JSON.parse(JSON.stringify(left));
+
 	for(var property in left) {
 		if(right.hasOwnProperty(property)) {
 			if(typeof left[property] === "object")
-				left[property] = this.merge(left[property], right[property])
+				ret[property] = this.merge(left[property], right[property])
 			else
-				left[property] = right[property]
+				ret[property] = right[property]
 		}
 	}
 
-	return left;
+	return ret;
 }
 
 BarGraph.prototype.currentItem = 0;

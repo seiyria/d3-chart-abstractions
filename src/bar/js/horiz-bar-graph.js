@@ -247,7 +247,7 @@ var HorizontalBarGraph = function(opts) {
 					ret += offset*j;
 					ret += offset/2;
 					ret -= d.compHeight/3;
-					ret += self.layout.graph.bars.spacing / 4;
+					ret += self.layout.graph.bars.spacing/4;
 				}
 
 				return ret;
@@ -692,8 +692,6 @@ var HorizontalBarGraph = function(opts) {
 	//perform a transition to the grouped state
 	self.groupTransition = function transitionGrouped(instant) {
 
-		console.log("group transition")
-
 		self.layout.graph.style="group";
 		var textPosition = textPositionCalc();
 
@@ -750,8 +748,6 @@ var HorizontalBarGraph = function(opts) {
 
 	//transition to a stacked graph
 	self.stackTransition = function transitionStacked(instant) {
-
-		console.log("stack transition")
 
 		self.layout.graph.style="stack";
 		var textPosition = textPositionCalc();
@@ -940,16 +936,20 @@ HorizontalBarGraph.prototype.defaults =  {
 };
 
 HorizontalBarGraph.prototype.merge = function(left, right) {
+
+	//aww yeah, deep copies
+	var ret = JSON.parse(JSON.stringify(left));
+
 	for(var property in left) {
 		if(right.hasOwnProperty(property)) {
 			if(typeof left[property] === "object")
-				left[property] = this.merge(left[property], right[property])
+				ret[property] = this.merge(left[property], right[property])
 			else
-				left[property] = right[property]
+				ret[property] = right[property]
 		}
 	}
 
-	return left;
+	return ret;
 }
 
 HorizontalBarGraph.prototype.currentItem = 0;
