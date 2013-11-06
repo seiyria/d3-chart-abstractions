@@ -4,10 +4,10 @@ module.exports = function(grunt) {
 	grunt.task.loadNpmTasks("grunt-contrib-uglify");
 	grunt.task.loadNpmTasks("grunt-contrib-cssmin");
 	grunt.task.loadNpmTasks("grunt-contrib-jshint");
-	grunt.task.loadNpmTasks("grunt-contrib-csslint");
 	grunt.task.loadNpmTasks("grunt-contrib-connect");
 	grunt.task.loadNpmTasks("grunt-remove-logging");
 	grunt.task.loadNpmTasks("grunt-mocha-test");
+	grunt.task.loadNpmTasks("grunt-reload");
 	grunt.task.loadNpmTasks("grunt-open");
 
 	grunt.initConfig({
@@ -15,19 +15,16 @@ module.exports = function(grunt) {
 		pkg: grunt.file.readJSON("package.json"),
 
 		jshint: {
-			default: ["src/**/*.js"]
-		},
-
-		csslint: {
-			default: {
-				src: ["src/**/*.css"]
+			default: ["src/**/*.js"],
+			options: {
+				'-W014': true
 			}
 		},
 
 		watch: {
 			deploy: {
-				files: ["src/**/*.js"],
-				tasks: ["jshint","uglify:bar"]
+				files: ["src/**/*"],
+				tasks: ["jshint","uglify","mochaTest"]
 			}
 		},
 
@@ -81,18 +78,35 @@ module.exports = function(grunt) {
 			}
 		},
 
-		connect: {
+		reload: {
+			port: 6001,
+			proxy: {
+				host: 'localhost',
+				port: 9000
+			}
+		},
 
+		connect: {
+			bar: {
+				options: {
+					port: "9000"
+				}
+			}
+		},
+
+		open: {
+			bar: {
+				path: "http://localhost:9000/bar.html"
+			}
 		}
 
 	});
 
-	//TODO restructure these better
-	grunt.registerTask("clean", ["jshint", "csslint"]);
-	grunt.registerTask("minify", ["uglify:bar", "cssmin:bar"]);
+	grunt.registerTask("clean", ["jshint"]);
+	grunt.registerTask("minify", ["uglify:bar"]);
 
 	grunt.registerTask("test", ["clean", "minify", "mochaTest"]);
-	grunt.registerTask("dev", ["connect","watch"]);
+	grunt.registerTask("bar", ["connect:bar","open:bar", "reload", "watch"]);
 	grunt.registerTask("deploy", ["uglify:deploy", "cssmin:deploy"]);
 
 }
