@@ -2,7 +2,7 @@
 	"name": "d3-chart-abstractions",
 	"version": "0.0.1",
 	"dependencies": {
-		"d3": "",
+		"d3": "d3#3.3.6",
 		"d3-tip": "",
 		"font-awesome": ""
 	}
