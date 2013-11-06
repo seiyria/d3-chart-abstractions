@@ -306,7 +306,7 @@ var BarGraph = function(opts) {
             svgElement.append("g").attr("class", "legend container").append("rect").attr("class", "x label legend").style("fill", "#cac").style("stroke", "#000").style("stroke-width", "1px").attr("x", self.layout.width / 2).attr("y", self.layout.height + self.layout.padding).call(xAxis);
             svgElement.append("text").attr("class", "y label").attr("text-anchor", "end").attr("y", -20).attr("x", -self.layout.height / 2).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-family", self.display.labels.y.font.face).style("font-size", self.display.labels.y.font.size).style("font-weight", self.display.labels.y.font.weight).style("font-style", self.display.labels.y.font.style).text(self.display.labels.y.text);
             svgElement.append("text").attr("class", "x label").attr("text-anchor", "end").attr("x", self.layout.width / 2).attr("y", self.layout.height + 20).attr("dy", ".75em").style("font-family", self.display.labels.x.font.face).style("font-size", self.display.labels.x.font.size).style("font-weight", self.display.labels.x.font.weight).style("font-style", self.display.labels.x.font.style).text(self.display.labels.x.text);
-            svgElement.append("foreignObject").attr("width", 32).attr("height", 32).attr("x", self.layout.width - self.layout.padding).attr("y", 0).attr("class", "swap-icon").on("mousedown", change).append("xhtml:body").html("<i class='icon-tasks'></i>");
+            svgElement.append("foreignObject").attr("width", 32).attr("height", 32).attr("x", self.layout.width - self.layout.padding).attr("y", 0).attr("class", "swap-icon").on("mousedown", change).append("xhtml:body").html("<i class='fa fa-tasks'></i>");
             svgElement.call(tip);
             return svgElement;
         }();
@@ -333,7 +333,7 @@ var BarGraph = function(opts) {
         text = function() {
             var totals = {};
             var innerText = rectBase.enter().append("text").text(function(d) {
-                return d.dispValue == 0 || !self.display.labels.bars.show ? "" : self.display.labels.bars.formatting.strFormat.split("%n").join(self.display.labels.bars.formatting.numFormat(d.dispValue));
+                return d.dispValue === 0 || !self.display.labels.bars.show ? "" : self.display.labels.bars.formatting.strFormat.split("%n").join(self.display.labels.bars.formatting.numFormat(d.dispValue));
             }).attr("width", self.layout.graph.bars.maxWidth ? self.layout.graph.bars.maxWidth : xScale.rangeBand()).attr("class", function(d) {
                 return "rectInner " + d.id;
             }).style("pointer-events", "none").style("font-family", self.display.labels.bars.font.face).style("font-size", self.display.labels.bars.font.size).style("font-weight", self.display.labels.bars.font.weight).style("font-style", self.display.labels.bars.font.style).style("fill", "#000");
@@ -637,6 +637,8 @@ BarGraph.prototype.merge = function(left, right) {
 
 BarGraph.prototype.currentItem = 0;
 
+exports.BarGraph = BarGraph;
+
 var HorizontalBarGraph = function(opts) {
     var merged = this.merge(this.defaults, opts);
     merged.layout.width = merged.layout.width - merged.layout.margin.left - merged.layout.margin.right;
@@ -925,7 +927,7 @@ var HorizontalBarGraph = function(opts) {
             svgElement.append("g").attr("class", "legend container").append("rect").attr("class", "x label legend").style("fill", "#cac").style("stroke", "#000").style("stroke-width", "1px").attr("x", self.layout.width / 2).attr("y", self.layout.height + self.layout.padding).call(xAxis);
             svgElement.append("text").attr("class", "y label").attr("text-anchor", "end").attr("y", -25).attr("x", -self.layout.height / 2).attr("dy", ".75em").attr("transform", "rotate(-90)").style("font-family", self.display.labels.y.font.face).style("font-size", self.display.labels.y.font.size).style("font-weight", self.display.labels.y.font.weight).style("font-style", self.display.labels.y.font.style).text(self.display.labels.y.text);
             svgElement.append("text").attr("class", "x label").attr("text-anchor", "end").attr("x", self.layout.width / 2).attr("y", self.layout.height + 20).attr("dy", ".75em").style("font-family", self.display.labels.x.font.face).style("font-size", self.display.labels.x.font.size).style("font-weight", self.display.labels.x.font.weight).style("font-style", self.display.labels.x.font.style).text(self.display.labels.x.text);
-            svgElement.append("foreignObject").attr("width", 32).attr("height", 32).attr("x", self.layout.width - self.layout.padding).attr("y", 0).attr("class", "swap-icon").on("mousedown", change).append("xhtml:body").html("<i class='icon-tasks'></i>");
+            svgElement.append("foreignObject").attr("width", 32).attr("height", 32).attr("x", self.layout.width - self.layout.padding).attr("y", 0).attr("class", "swap-icon").on("mousedown", change).append("xhtml:body").html("<i class='fa fa-tasks'></i>");
             svgElement.call(tip);
             return svgElement;
         }();
@@ -952,7 +954,7 @@ var HorizontalBarGraph = function(opts) {
         text = function() {
             var totals = {};
             var innerText = rectBase.enter().append("text").text(function(d) {
-                return d.dispValue == 0 || !self.display.labels.bars.show ? "" : self.display.labels.bars.formatting.strFormat.split("%n").join(self.display.labels.bars.formatting.numFormat(d.dispValue));
+                return d.dispValue === 0 || !self.display.labels.bars.show ? "" : self.display.labels.bars.formatting.strFormat.split("%n").join(self.display.labels.bars.formatting.numFormat(d.dispValue));
             }).attr("class", function(d) {
                 return "rectInner " + d.id;
             }).style("pointer-events", "none").style("font-family", self.display.labels.bars.font.face).style("font-size", self.display.labels.bars.font.size).style("font-weight", self.display.labels.bars.font.weight).style("font-style", self.display.labels.bars.font.style).style("fill", "#000");
@@ -1255,3 +1257,5 @@ HorizontalBarGraph.prototype.merge = function(left, right) {
 };
 
 HorizontalBarGraph.prototype.currentItem = 0;
+
+exports.HorizontalBarGraph = HorizontalBarGraph;
