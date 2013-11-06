@@ -11,7 +11,7 @@
 		"url": "git://github.com/seiyria/d3-chart-abstractions.git"
 	},
 	"author": "Kyle Kemp",
-	"license": "MTT",
+	"license": "MIT",
 	"readmeFilename": "README.md",
 	"dependencies": {
 		"grunt": "*",
@@ -24,6 +24,9 @@
 		"grunt-remove-logging": "*",
 		"grunt-mocha-test": "*",
 		"grunt-open": "*",
-		"bower": "*"
+		"bower": "*",
+		"mocha": "*",
+		"chai": "*",
+		"d3": "~3.3.6"
 	}
 }
