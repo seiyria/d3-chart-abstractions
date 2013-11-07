@@ -46,7 +46,7 @@ module.exports = function(grunt) {
 					mangle: false
 				},
 				files: {
-					"dist/development/bar.js": "src/bar/**/*.js"
+					"dist/development/bar.js": ["src/merge.js","src/bar/**/*.js"]
 				}
 			},
 			combine: {
