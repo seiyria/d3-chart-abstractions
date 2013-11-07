@@ -17,7 +17,7 @@ var Merge = function() {
         merged.display.labels.tooltip.formatting = merged.display.labels.tooltip.formatting || merged.display.labels.bars.formatting;
         formattingObjects.forEach(function(e, i) {
             e.formatting = e.formatting || merged.formatting;
-            if (typeof e.formatting.numFormat !== "function") e.formatting.numFormat = d3.format(e.formatting.numFormat);
+            if (typeof e.formatting.numFormat !== "function" && typeof d3 !== "undefined") e.formatting.numFormat = d3.format(e.formatting.numFormat);
         });
         var fontObjects = [ merged.display.labels.aggregate, merged.display.labels.tooltip, merged.display.labels.legend, merged.display.labels.axes, merged.display.labels.bars, merged.display.labels.x, merged.display.labels.y ];
         fontObjects.forEach(function(e, i) {
@@ -560,10 +560,7 @@ var BarGraph = function(opts) {
 BarGraph.prototype.defaults = {
     formatting: {
         numFormat: "",
-        strFormat: "%n",
-        formatter: function(d) {
-            return d;
-        }
+        strFormat: "%n"
     },
     font: {
         align: "center",
@@ -648,6 +645,10 @@ BarGraph.prototype.defaults = {
 };
 
 BarGraph.prototype.currentItem = 0;
+
+root = typeof exports !== "undefined" && exports !== null ? exports : window;
+
+root.BarGraph = BarGraph;
 
 var HorizontalBarGraph = function(opts) {
     var merged = Merge.BarMerge(this.defaults, opts);
@@ -1245,3 +1246,7 @@ HorizontalBarGraph.prototype.defaults = {
 };
 
 HorizontalBarGraph.prototype.currentItem = 0;
+
+root = typeof exports !== "undefined" && exports !== null ? exports : window;
+
+root.HorizontalBarGraph = HorizontalBarGraph;
