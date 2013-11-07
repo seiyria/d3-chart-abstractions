@@ -23,7 +23,7 @@ module.exports = function(grunt) {
 
 		watch: {
 			deploy: {
-				files: ["src/**/*"],
+				files: ["src/**/*", "test/**/*"],
 				tasks: ["jshint","uglify","mochaTest"]
 			}
 		},
