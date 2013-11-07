@@ -64,3 +64,6 @@ var Merge = (function(){
 
 	return this;
 })();
+
+root = typeof exports !== "undefined" && exports !== null ? exports : window;
+root.Merge = Merge;
