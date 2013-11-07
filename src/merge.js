@@ -40,7 +40,7 @@ var Merge = (function(){
 		formattingObjects.forEach(function(e, i) {
 			e.formatting = e.formatting || merged.formatting;
 
-			if(typeof e.formatting.numFormat !== "function")
+			if(typeof e.formatting.numFormat !== "function" && typeof d3 !== 'undefined')
 				e.formatting.numFormat = d3.format(e.formatting.numFormat);
 		});
 		
