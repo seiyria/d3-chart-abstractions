@@ -51,7 +51,7 @@ d3.sankey = function() {
   };
 
   sankey.link = function() {
-    var curvature = .5;
+    var curvature = 0.5;
 
     function link(d) {
       var x0 = d.source.x + d.source.dx,
@@ -113,15 +113,17 @@ d3.sankey = function() {
         nextNodes,
         x = 0;
 
+    var outerNodeFunction = function(node) {
+      node.x = x;
+      node.dx = nodeWidth;
+      node.sourceLinks.forEach(function(link) {
+        nextNodes.push(link.target);
+      });
+    };
+
     while (remainingNodes.length) {
       nextNodes = [];
-      remainingNodes.forEach(function(node) {
-        node.x = x;
-        node.dx = nodeWidth;
-        node.sourceLinks.forEach(function(link) {
-          nextNodes.push(link.target);
-        });
-      });
+      remainingNodes.forEach(outerNodeFunction);
       remainingNodes = nextNodes;
       ++x;
     }
@@ -164,7 +166,7 @@ d3.sankey = function() {
     initializeNodeDepth();
     resolveCollisions();
     for (var alpha = 1; iterations > 0; --iterations) {
-      relaxRightToLeft(alpha *= .99);
+      relaxRightToLeft(alpha *= 0.99);
       resolveCollisions();
       relaxLeftToRight(alpha);
       resolveCollisions();
