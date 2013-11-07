@@ -898,3 +898,6 @@ HorizontalBarGraph.prototype.defaults =  {
 };
 
 HorizontalBarGraph.prototype.currentItem = 0;
+
+root = typeof exports !== "undefined" && exports !== null ? exports : window;
+root.HorizontalBarGraph = HorizontalBarGraph;

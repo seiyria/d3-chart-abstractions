@@ -815,8 +815,7 @@ var BarGraph = function(opts) {
 BarGraph.prototype.defaults = {
 	formatting: {
 		numFormat: '',
-		strFormat: "%n",
-		formatter: function(d) { return d; }
+		strFormat: "%n"
 	},
 
 	font: {
@@ -915,3 +914,6 @@ BarGraph.prototype.defaults = {
 };
 
 BarGraph.prototype.currentItem = 0;
+
+root = typeof exports !== "undefined" && exports !== null ? exports : window;
+root.BarGraph = BarGraph;
